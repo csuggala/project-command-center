@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Command Center — Chandana Suggala</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0A1628; color: #E8EDF2; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 760px; margin: 0 auto; }
+
+  /* Header */
+  .header { margin-bottom: 2rem; text-align: center; }
+  .header h1 { font-size: 26px; font-weight: 600; color: #fff; margin-bottom: 6px; letter-spacing: -0.02em; }
+  .header p { font-size: 14px; color: #6B8099; }
+
+  /* Mode selector */
+  .mode-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+  .mode-card { background: #112036; border: 1.5px solid #1E3347; border-radius: 14px; padding: 1.25rem; cursor: pointer; transition: all 0.2s; }
+  .mode-card:hover { border-color: #4B9EF4; }
+  .mode-card.active { border-color: #4B9EF4; background: #0F2744; }
+  .mode-icon { font-size: 24px; margin-bottom: 8px; }
+  .mode-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .mode-desc { font-size: 12px; color: #6B8099; line-height: 1.5; }
+
+  /* Forms */
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+  .card { background: #112036; border: 1px solid #1E3347; border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 600; color: #4B9EF4; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .full { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 500; color: #9EB3C8; }
+  .field input, .field select, .field textarea { padding: 9px 11px; font-size: 13px; font-family: inherit; color: #E8EDF2; background: #0A1628; border: 1px solid #1E3347; border-radius: 8px; width: 100%; transition: border-color 0.2s; }
+  .field textarea { resize: vertical; line-height: 1.5; }
+  .field textarea.large { min-height: 200px; }
+  .field textarea.small { min-height: 72px; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #4B9EF4; }
+  .field select option { background: #112036; }
+
+  /* Button */
+  .analyze-btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 500; cursor: pointer; border-radius: 10px; background: #4B9EF4; color: #fff; border: none; margin-top: 0.5rem; transition: background 0.2s; letter-spacing: -0.01em; }
+  .analyze-btn:hover { background: #3B8EE4; }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Results */
+  .results { margin-top: 1.5rem; }
+  .overall-card { border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; border: 1px solid; }
+  .overall-card.RED { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); }
+  .overall-card.AMBER { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); }
+  .overall-card.GREEN { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25); }
+  .overall-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .overall-badge { font-size: 13px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+  .overall-badge.RED { background: rgba(239,68,68,0.2); color: #EF4444; }
+  .overall-badge.AMBER { background: rgba(245,158,11,0.2); color: #F59E0B; }
+  .overall-badge.GREEN { background: rgba(34,197,94,0.2); color: #22C55E; }
+  .overall-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6B8099; }
+  .overall-reason { font-size: 14px; color: #C8D8E8; line-height: 1.6; }
+  .exec-box { background: #0A1628; border-left: 3px solid #4B9EF4; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 1rem; font-size: 13px; color: #9EB3C8; line-height: 1.6; font-style: italic; }
+  
+  /* Dimensions */
+  .dims { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .dim-card { flex: 1; min-width: 100px; border-radius: 10px; padding: 12px; border: 1px solid; }
+  .dim-card.RED { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); }
+  .dim-card.AMBER { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); }
+  .dim-card.GREEN { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25); }
+  .dim-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #6B8099; margin-bottom: 4px; display: block; }
+  .dim-rag { font-size: 12px; font-weight: 600; display: block; margin-bottom: 4px; }
+  .dim-rag.RED { color: #EF4444; }
+  .dim-rag.AMBER { color: #F59E0B; }
+  .dim-rag.GREEN { color: #22C55E; }
+  .dim-note { font-size: 11px; color: #6B8099; line-height: 1.4; }
+
+  /* Hidden risks */
+  .section-card { background: #112036; border: 1px solid #1E3347; border-radius: 14px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .section-card h4 { font-size: 13px; font-weight: 600; color: #E8EDF2; margin-bottom: 12px; }
+  .risk-item { background: #0A1628; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; border: 1px solid #1E3347; }
+  .risk-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .risk-title { font-size: 13px; font-weight: 500; color: #E8EDF2; flex: 1; }
+  .sev-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+  .sev-badge.high { background: rgba(239,68,68,0.15); color: #EF4444; border: 1px solid rgba(239,68,68,0.3); }
+  .sev-badge.medium { background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); }
+  .sev-badge.low { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.3); }
+  .risk-why { font-size: 12px; color: #7A8FA0; line-height: 1.5; margin-bottom: 6px; }
+  .risk-action { font-size: 12px; color: #9EB3C8; line-height: 1.5; }
+  .risk-action strong { color: #4B9EF4; font-weight: 500; }
+
+  /* Actions */
+  .action-item { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+  .action-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: rgba(75,158,244,0.15); color: #4B9EF4; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(75,158,244,0.3); }
+  .action-text { font-size: 13px; color: #9EB3C8; line-height: 1.5; }
+
+  /* Loading */
+  .loading { text-align: center; padding: 3rem; color: #6B8099; font-size: 14px; }
+  .spinner { width: 32px; height: 32px; border: 2px solid #1E3347; border-top-color: #4B9EF4; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); color: #EF4444; border-radius: 10px; padding: 14px; font-size: 13px; margin-top: 1rem; }
+
+  .divider { border: none; border-top: 1px solid #1E3347; margin: 2rem 0 1rem; }
+  .footer { text-align: center; font-size: 12px; color: #2A4060; padding-bottom: 1rem; }
+
+  @media (max-width: 520px) {
+    .mode-selector { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .dims { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Project Command Center</h1>
+    <p>AI-powered project health assessment — built by Chandana Suggala</p>
+  </div>
+
+  <!-- Mode selector -->
+  <div class="mode-selector">
+    <div class="mode-card active" id="mode-raw-card" onclick="setMode('raw')">
+      <div class="mode-icon">📋</div>
+      <div class="mode-title">Paste raw notes</div>
+      <div class="mode-desc">Paste meeting notes, status updates, or project briefs — Claude reads between the lines to surface hidden risks</div>
+    </div>
+    <div class="mode-card" id="mode-structured-card" onclick="setMode('structured')">
+      <div class="mode-icon">📊</div>
+      <div class="mode-title">Structured inputs</div>
+      <div class="mode-desc">Fill in dropdowns and fields for a fast, structured weekly status assessment</div>
+    </div>
+  </div>
+
+  <!-- Raw notes form -->
+  <div class="form-panel active" id="panel-raw">
+    <div class="card">
+      <div class="section-label">Project notes</div>
+      <div class="field">
+        <label>Paste your project notes, status update, or meeting summary</label>
+        <textarea class="large" id="raw-notes" placeholder="e.g. Project: CRM Migration — Q3 Go-Live&#10;&#10;Status update as of Week 14. Overall status is green. Engineering completed data mapping last week. Targeting July 31 go-live.&#10;&#10;- UAT starts Monday with offshore team&#10;- Sales ops training scheduled for last two weeks of July&#10;- Legal review of data retention policies still pending&#10;- IT infrastructure team supporting two other go-lives in July&#10;- Executive sponsor changed last month, not yet briefed&#10;- Vendor integration testing window July 14-18, no buffer built in"></textarea>
+      </div>
+    </div>
+    <button class="analyze-btn" id="btn-raw" onclick="analyze('raw')">Analyze project ↗</button>
+  </div>
+
+  <!-- Structured form -->
+  <div class="form-panel" id="panel-structured">
+    <div class="card">
+      <div class="section-label">Project basics</div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Project name & description</label>
+          <textarea class="small" id="s-desc" placeholder="e.g. CRM Migration — moving from Salesforce to HubSpot to consolidate customer data"></textarea>
+        </div>
+        <div class="field">
+          <label>Current phase</label>
+          <select id="s-phase">
+            <option value="">Select phase</option>
+            <option>Planning</option>
+            <option>Execution</option>
+            <option>Testing / UAT</option>
+            <option>Go-live preparation</option>
+            <option>Post-launch</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Target go-live date</label>
+          <input type="text" id="s-golive" placeholder="e.g. July 31, 2025">
+        </div>
+        <div class="field">
+          <label>Schedule status</label>
+          <select id="s-schedule">
+            <option value="">Select status</option>
+            <option>On track</option>
+            <option>At risk — minor delay</option>
+            <option>Behind — significant delay</option>
+            <option>Critical — deadline in jeopardy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Budget status</label>
+          <select id="s-budget">
+            <option value="">Select status</option>
+            <option>On budget</option>
+            <option>Over by less than 10%</option>
+            <option>Over by 10–25%</option>
+            <option>Over by more than 25%</option>
+            <option>Under budget</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Milestones & risks</div>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Key milestones & their status</label>
+          <textarea class="small" id="s-milestones" placeholder="e.g. Data mapping — Complete&#10;UAT — In progress, 2 weeks behind&#10;Training — Not started"></textarea>
+        </div>
+        <div class="field full">
+          <label>Open risks, issues & blockers</label>
+          <textarea class="small" id="s-risks" placeholder="e.g. IT team supporting 2 other go-lives&#10;Legal review pending 2 weeks&#10;Executive sponsor recently changed"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Team & stakeholders</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Resource status</label>
+          <select id="s-resources">
+            <option value="">Select status</option>
+            <option>Fully staffed</option>
+            <option>Minor gaps (1–2 roles)</option>
+            <option>Significant gaps</option>
+            <option>Critical resource missing</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Stakeholder alignment</label>
+          <select id="s-stakeholders">
+            <option value="">Select status</option>
+            <option>Fully aligned</option>
+            <option>Mostly aligned, minor concerns</option>
+            <option>Some resistance or confusion</option>
+            <option>Significant misalignment</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Executive sponsor engagement</label>
+          <select id="s-sponsor">
+            <option value="">Select status</option>
+            <option>Actively engaged</option>
+            <option>Passively engaged</option>
+            <option>Disengaged or unbriefed</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="analyze-btn" id="btn-structured" onclick="analyze('structured')">Analyze project ↗</button>
+  </div>
+
+  <div id="results"></div>
+
+  <div class="divider"></div>
+  <div class="footer">Project Command Center · Built by Chandana Suggala · AI-enabled program management</div>
+</div>
+
+<script>
+function setMode(mode) {
+  document.getElementById('mode-raw-card').classList.toggle('active', mode === 'raw');
+  document.getElementById('mode-structured-card').classList.toggle('active', mode === 'structured');
+  document.getElementById('panel-raw').classList.toggle('active', mode === 'raw');
+  document.getElementById('panel-structured').classList.toggle('active', mode === 'structured');
+  document.getElementById('results').innerHTML = '';
+}
+
+function getRagEmoji(rag) {
+  if (rag === 'RED') return '🔴';
+  if (rag === 'AMBER') return '🟡';
+  return '🟢';
+}
+
+async function analyze(mode) {
+  let body = { mode };
+
+  if (mode === 'raw') {
+    const notes = document.getElementById('raw-notes').value.trim();
+    if (!notes) { alert('Please paste some project notes first.'); return; }
+    body.rawNotes = notes;
+  } else {
+    const desc = document.getElementById('s-desc').value.trim();
+    if (!desc) { alert('Please enter a project description first.'); return; }
+    body.projectDetails = `Project: ${desc}
+Phase: ${document.getElementById('s-phase').value || 'Not specified'}
+Target go-live: ${document.getElementById('s-golive').value || 'Not specified'}
+Schedule: ${document.getElementById('s-schedule').value || 'Not specified'}
+Budget: ${document.getElementById('s-budget').value || 'Not specified'}
+Milestones: ${document.getElementById('s-milestones').value || 'Not provided'}
+Risks & issues: ${document.getElementById('s-risks').value || 'None noted'}
+Resources: ${document.getElementById('s-resources').value || 'Not specified'}
+Stakeholder alignment: ${document.getElementById('s-stakeholders').value || 'Not specified'}
+Executive sponsor: ${document.getElementById('s-sponsor').value || 'Not specified'}`;
+  }
+
+  const btn = document.getElementById(mode === 'raw' ? 'btn-raw' : 'btn-structured');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  document.getElementById('results').innerHTML = `<div class="loading"><div class="spinner"></div>Running command center analysis...</div>`;
+
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const result = await response.json();
+    if (result.error) throw new Error(result.error);
+    renderResults(result);
+  } catch (err) {
+    document.getElementById('results').innerHTML = `<div class="error">Something went wrong: ${err.message}. Please try again.</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Analyze project ↗';
+}
+
+function renderResults(r) {
+  const dims = r.dimensions || {};
+  const dimHTML = Object.values(dims).map(d => `
+    <div class="dim-card ${d.rag}">
+      <span class="dim-label">${d.label}</span>
+      <span class="dim-rag ${d.rag}">${getRagEmoji(d.rag)} ${d.rag}</span>
+      <span class="dim-note">${d.note || ''}</span>
+    </div>`).join('');
+
+  const risksHTML = (r.hidden_risks || []).map(risk => `
+    <div class="risk-item">
+      <div class="risk-header">
+        <span class="risk-title">${risk.title}</span>
+        <span class="sev-badge ${risk.severity}">${risk.severity}</span>
+      </div>
+      <div class="risk-why">${risk.why}</div>
+      <div class="risk-action"><strong>Action:</strong> ${risk.action}</div>
+    </div>`).join('');
+
+  const actionsHTML = (r.top_actions || []).map((a, i) => `
+    <div class="action-item">
+      <div class="action-num">${i + 1}</div>
+      <div class="action-text">${a.text}</div>
+    </div>`).join('');
+
+  document.getElementById('results').innerHTML = `
+    <div class="results">
+      <div class="overall-card ${r.overall}">
+        <div class="overall-top">
+          <span class="overall-label">Overall health</span>
+          <span class="overall-badge ${r.overall}">${getRagEmoji(r.overall)} ${r.overall}</span>
+        </div>
+        <div class="overall-reason">${r.overall_reason}</div>
+      </div>
+      <div class="exec-box">${r.executive_summary}</div>
+      <div class="dims">${dimHTML}</div>
+      <div class="section-card">
+        <h4>Hidden risks surfaced</h4>
+        ${risksHTML}
+      </div>
+      <div class="section-card">
+        <h4>Top actions this week</h4>
+        ${actionsHTML}
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>
